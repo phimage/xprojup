@@ -37,7 +37,7 @@ else
 fi
 
 archive=$TMP/$archiveName
-curl -sL https://github.com/phimage/plistconvert/releases/latest/download/$archiveName -o $archive
+curl -sL https://github.com/phimage/xprojup/releases/latest/download/$archiveName -o $archive
 
 if [[ "$OSTYPE" == "darwin"* ]]; then  # Mac OSX
   unzip -q $archive -d $TMP/
