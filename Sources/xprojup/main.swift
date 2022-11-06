@@ -132,7 +132,7 @@ struct Cmd: ParsableCommand {
                         wantedVersionString = "12.0"
                     } else if wantedVersion >= PBXProject.Version ._1100 {
                         wantedVersionString = "10.0"
-                    } else  {
+                    } else {
                         wantedVersionString = "10.0"
                     }
                     if current < Double(wantedVersionString)! {
