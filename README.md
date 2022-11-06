@@ -6,7 +6,9 @@
 [![build](https://github.com/phimage/xprojup/actions/workflows/build.yml/badge.svg)](https://github.com/phimage/xprojup/actions/workflows/build.yml)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%F0%9F%A7%A1-white.svg?style=flat)](https://github.com/sponsors/phimage)
 
-Update project file to latest Xcode needs to avoid warnings such as `⚠️ Update to recommanded settings`
+Update project files to latest Xcode needs to avoid warnings such as `⚠️ Update to recommanded settings`
+
+Current Xcode target version is `13.2`
 
 ## Usage
 
