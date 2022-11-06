@@ -23,7 +23,7 @@ jobs:
       - name: ⬆️ Upload to Release
         run: |
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
-          ARTIFACT=.build/release/$REPOSITORY_NAME.zip
+          ARTIFACT=.build/apple/Products/Release/$REPOSITORY_NAME.zip
           AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
           CONTENT_LENGTH_HEADER="Content-Length: $(stat -f%z "$ARTIFACT")"
           CONTENT_TYPE_HEADER="Content-Type: application/zip"

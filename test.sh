@@ -1,6 +1,10 @@
 #!/bin/bash
 
-cmd=.build/apple/Products/Release/xprojup
+if [[ "$OSTYPE" == "darwin"* ]]; then  # Mac OSX
+    cmd=.build/apple/Products/Release/xprojup
+else
+    cmd=.build/release/xprojup
+fi
 file=.build/checkouts/XcodeProjKit/
 
 if [[ ! -f "$cmd" ]]
