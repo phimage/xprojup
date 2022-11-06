@@ -16,10 +16,9 @@ struct Cmd: ParsableCommand {
     mutating func run() throws {
         let url = URL(fileURLWithPath: self.path)
 
-        if url.pathExtension == "xcodeproj" {
+        if url.pathExtension == "xcodeproj" || url.pathExtension == "pbxproj" {
             try manageXcodeProj(url)
         } else {
-
             try manageFolder(url)
         }
     }
@@ -27,7 +26,7 @@ struct Cmd: ParsableCommand {
     fileprivate func manageFolder(_ url: URL) throws {
         guard url.isDirectory else { return }
         for url in try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: []) {
-            if url.pathExtension == "xcodeproj" {
+            if url.pathExtension == "xcodeproj" || url.pathExtension == "pbxproj" {
                 try manageXcodeProj(url)
             } else  if recursive {
                 try manageFolder(url)
@@ -69,13 +68,10 @@ struct Cmd: ParsableCommand {
 
             }
 
-            // change minimum version deploy target
-            //  IPHONEOS_DEPLOYMENT_TARGET = 12.0;
-
-            // TODO: modify xxx.xcodeproj/xcshareddata/xcschemes/xxx.xcscheme
-
             print("💾 Writing \(url)")
             try xcodeProj.write(to: url, format: .openStep )
+
+            // TODO: modify xxx.xcodeproj/xcshareddata/xcschemes/xxx.xcscheme
         }
     }
 }

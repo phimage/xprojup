@@ -10,15 +10,28 @@ fi
 
 exitStatus=0
 
-# json
+# 
 $cmd $file
-exitStatus=$?
+status=$?
 
-if [ "$exitStatus" -eq "0" ]
+if [ "$status" -eq "0" ]
 then
     echo "✅ "
 else
-    echo "🚫 $exitStatus"
+    echo "🚫 $status"
+    exitStatus=1
 fi
- 
+
+# recursive
+$cmd --recursive $file/Tests/ok/
+status=$?
+
+if [ "$status" -eq "0" ]
+then
+    echo "✅ "
+else
+    echo "🚫 $status"
+    exitStatus=1
+fi
+
 exit $exitStatus
