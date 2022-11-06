@@ -8,8 +8,6 @@
 
 Update project files to latest Xcode needs to avoid warnings such as `⚠️ Update to recommanded settings`
 
-Current Xcode target version is `13.2`
-
 ## Usage
 
 ```bash
@@ -18,6 +16,13 @@ Current Xcode target version is `13.2`
 
 ```bash
     xprojup --recursive /path/to/a/folder/that/contains/some/proj
+```
+
+💡 Current Xcode target version is `14.0` ie. `1400`
+
+You could choose a specific versio using `--version <4 digits>`
+```bash
+    xprojup --xcode 1320 /path/to/my.xcodeproj
 ```
 
 ## Install
