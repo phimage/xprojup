@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmd=.build/release/xprojup
+cmd=.build/apple/Products/Release/xprojup
 file=.build/checkouts/XcodeProjKit/
 
 if [[ ! -f "$cmd" ]]
