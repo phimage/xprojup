@@ -41,6 +41,58 @@ struct Cmd: ParsableCommand {
         return ._1400
     }
 
+    fileprivate func warns(_ originVersion: PBXProject.Version, _ wantedVersion: PBXProject.Version) -> [String: String] {
+        var warns: [String: String] = [:]
+        if originVersion < PBXProject.Version._1400 && wantedVersion >= PBXProject.Version._1400 {
+            // ? warns["DEAD_CODE_STRIPPING"] = "YES"
+        }
+
+        if originVersion < PBXProject.Version._1300 && wantedVersion >= PBXProject.Version._1300 {
+            warns["CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER"] = "YES"
+        }
+
+        if originVersion < PBXProject.Version._1000 && wantedVersion >= PBXProject.Version._1000 {
+            warns["CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED"] = "YES"
+        }
+
+        if originVersion < PBXProject.Version._0930 && wantedVersion >= PBXProject.Version._0930 {
+            warns["CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS"] = "YES"
+            warns["CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF"] = "YES"
+        }
+
+        if originVersion < PBXProject.Version._0900 && wantedVersion >= PBXProject.Version._0900 {
+            warns["CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING"] = "YES"
+            warns["CLANG_WARN_COMMA"] = "YES"
+            warns["CLANG_WARN_NON_LITERAL_NULL_CONVERSION"] = "YES"
+            warns["CLANG_WARN_OBJC_LITERAL_CONVERSION"] = "YES"
+            warns["CLANG_WARN_RANGE_LOOP_ANALYSIS"] = "YES"
+            warns["CLANG_WARN_STRICT_PROTOTYPES"] = "YES"
+        }
+
+        if originVersion < PBXProject.Version._0820 && wantedVersion >= PBXProject.Version._0820 {
+            warns["CLANG_WARN_BOOL_CONVERSION"] = "YES"
+            warns["CLANG_WARN_CONSTANT_CONVERSION"] = "YES"
+            warns["CLANG_WARN_EMPTY_BODY"] = "YES"
+            warns["CLANG_WARN_ENUM_CONVERSION"] = "YES"
+            warns["CLANG_WARN_INFINITE_RECURSION"] = "YES"
+            warns["CLANG_WARN_INT_CONVERSION"] = "YES"
+            warns["CLANG_WARN_SUSPICIOUS_MOVE"] = "YES"
+            warns["CLANG_WARN_UNREACHABLE_CODE"] = "YES"
+            warns["CLANG_WARN__DUPLICATE_METHOD_MATCH"] = "YES"
+
+            warns["ENABLE_STRICT_OBJC_MSGSEND"] = "YES"
+            warns["ENABLE_TESTABILITY"] = "YES"
+
+            warns["GCC_NO_COMMON_BLOCKS"] = "YES"
+            warns["GCC_WARN_64_TO_32_BIT_CONVERSION"] = "YES"
+            warns["GCC_WARN_UNDECLARED_SELECTOR"] = "YES"
+            warns["GCC_WARN_UNINITIALIZED_AUTOS"] = "YES"
+            warns["GCC_WARN_UNUSED_FUNCTION"] = "YES"
+        }
+
+        return warns
+    }
+
     fileprivate func manageXcodeProj(_ url: URL) throws {
         print("📖 Reading \(url)")
         let xcodeProj = try XcodeProj(url: url)
@@ -54,54 +106,7 @@ struct Cmd: ParsableCommand {
 
             // add missing warning
 
-            var warns: [String: String] = [:]
-
-            if originVersion < PBXProject.Version._1400 && wantedVersion >= PBXProject.Version._1400 {
-                // ? warns["DEAD_CODE_STRIPPING"] = "YES"
-            }
-
-            if originVersion < PBXProject.Version._1300 && wantedVersion >= PBXProject.Version._1300 {
-                warns["CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER"] = "YES"
-            }
-
-            if originVersion < PBXProject.Version._1000 && wantedVersion >= PBXProject.Version._1000 {
-                warns["CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED"] = "YES"
-            }
-
-            if originVersion < PBXProject.Version._0930 && wantedVersion >= PBXProject.Version._0930 {
-                warns["CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS"] = "YES"
-                warns["CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF"] = "YES"
-            }
-
-            if originVersion < PBXProject.Version._0900 && wantedVersion >= PBXProject.Version._0900 {
-                warns["CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING"] = "YES"
-                warns["CLANG_WARN_COMMA"] = "YES"
-                warns["CLANG_WARN_NON_LITERAL_NULL_CONVERSION"] = "YES"
-                warns["CLANG_WARN_OBJC_LITERAL_CONVERSION"] = "YES"
-                warns["CLANG_WARN_RANGE_LOOP_ANALYSIS"] = "YES"
-                warns["CLANG_WARN_STRICT_PROTOTYPES"] = "YES"
-            }
-
-            if originVersion < PBXProject.Version._0820 && wantedVersion >= PBXProject.Version._0820 {
-                warns["CLANG_WARN_BOOL_CONVERSION"] = "YES"
-                warns["CLANG_WARN_CONSTANT_CONVERSION"] = "YES"
-                warns["CLANG_WARN_EMPTY_BODY"] = "YES"
-                warns["CLANG_WARN_ENUM_CONVERSION"] = "YES"
-                warns["CLANG_WARN_INFINITE_RECURSION"] = "YES"
-                warns["CLANG_WARN_INT_CONVERSION"] = "YES"
-                warns["CLANG_WARN_SUSPICIOUS_MOVE"] = "YES"
-                warns["CLANG_WARN_UNREACHABLE_CODE"] = "YES"
-                warns["CLANG_WARN__DUPLICATE_METHOD_MATCH"] = "YES"
-
-                warns["ENABLE_STRICT_OBJC_MSGSEND"] = "YES"
-                warns["ENABLE_TESTABILITY"] = "YES"
-
-                warns["GCC_NO_COMMON_BLOCKS"] = "YES"
-                warns["GCC_WARN_64_TO_32_BIT_CONVERSION"] = "YES"
-                warns["GCC_WARN_UNDECLARED_SELECTOR"] = "YES"
-                warns["GCC_WARN_UNINITIALIZED_AUTOS"] = "YES"
-                warns["GCC_WARN_UNUSED_FUNCTION"] = "YES"
-            }
+            let warns = warns(originVersion, wantedVersion)
 
             for buildConfiguration in xcodeProj.project.buildConfigurationList?.buildConfigurations ?? [] {
                 print("⚙️ \(buildConfiguration.fields["name"] ?? "")")
