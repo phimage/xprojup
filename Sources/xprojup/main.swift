@@ -61,7 +61,7 @@ struct Cmd: ParsableCommand {
 
                 if let target = buildConfiguration.buildSettings?["IPHONEOS_DEPLOYMENT_TARGET"] as? String, let num = Double(target) {
                     let value = "12.0"
-                    if num < Double(value)! { // swiftlint:disable:this force_cast
+                    if num < Double(value)! {
                         print("⬆ 📱 IPHONEOS_DEPLOYMENT_TARGET = \(value)")
                         buildConfiguration.buildSettings?["IPHONEOS_DEPLOYMENT_TARGET"] = value
                     }
