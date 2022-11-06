@@ -44,7 +44,7 @@ struct Cmd: ParsableCommand {
     fileprivate func warns(_ originVersion: PBXProject.Version, _ wantedVersion: PBXProject.Version) -> [String: String] {
         var warns: [String: String] = [:]
         if originVersion < PBXProject.Version._1400 && wantedVersion >= PBXProject.Version._1400 {
-            // ? warns["DEAD_CODE_STRIPPING"] = "YES"
+            warns["DEAD_CODE_STRIPPING"] = "YES"
         }
 
         if originVersion < PBXProject.Version._1300 && wantedVersion >= PBXProject.Version._1300 {
@@ -119,13 +119,20 @@ struct Cmd: ParsableCommand {
                     }
                 }
 
+                // TODO: splitted prop?
+                // - SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+                // + SWIFT_COMPILATION_MODE = wholemodule;
+                // + SWIFT_OPTIMIZATION_LEVEL = "-O";
+
+                // TODO: LD_RUNPATH_SEARCH_PATHS on one line
+
                 if let target = buildConfiguration.buildSettings?["IPHONEOS_DEPLOYMENT_TARGET"] as? String, let current = Double(target) {
-                    var wantedVersionString = "12.0"
-                    if wantedVersion >= PBXProject.Version ._1400 {
-                        // ?
-                    } else if wantedVersion >= PBXProject.Version ._1300 {
+                    let wantedVersionString: String
+                    if wantedVersion >= PBXProject.Version ._1300 {
                         wantedVersionString = "12.0"
                     } else if wantedVersion >= PBXProject.Version ._1100 {
+                        wantedVersionString = "10.0"
+                    } else  {
                         wantedVersionString = "10.0"
                     }
                     if current < Double(wantedVersionString)! {
@@ -154,6 +161,7 @@ extension URL {
 }
 
 extension PBXProject.Version {
+    static let _1410 = PBXProject.Version(major: 14, minor: 10)
     static let _1400 = PBXProject.Version(major: 14, minor: 00)
     static let _1320 = PBXProject.Version(major: 13, minor: 20)
     static let _1300 = PBXProject.Version(major: 13, minor: 00)
