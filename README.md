@@ -56,7 +56,7 @@ sudo apt install swiftlang-slim
 linked to swift lib and os lib
 
 ```bash
-$ ldd plistconvert 
+$ ldd xprojup 
 	linux-vdso.so.1 (0x00007ffe977fb000)
 	libswiftGlibc.so => /usr/lib/swift/linux/libswiftGlibc.so (0x00007fe95fcb7000)
 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fe95fb61000)
