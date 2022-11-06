@@ -65,7 +65,7 @@ jobs:
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
           ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-dynamic_swift_5.7-ubuntu-focal.zip
           AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
-          CONTENT_LENGTH_HEADER="Content-Length: $(stat -f%z "$ARTIFACT")"
+          CONTENT_LENGTH_HEADER="Content-Length: $(stat --format=%s "$ARTIFACT")"
           CONTENT_TYPE_HEADER="Content-Type: application/zip"
           RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
           FILENAME=$(basename $ARTIFACT)
@@ -89,7 +89,7 @@ jobs:
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
           ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-static-ubuntu-focal.zip
           AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
-          CONTENT_LENGTH_HEADER="Content-Length: $(stat -f%z "$ARTIFACT")"
+          CONTENT_LENGTH_HEADER="Content-Length: $(stat --format=%s "$ARTIFACT")"
           CONTENT_TYPE_HEADER="Content-Type: application/zip"
           RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
           FILENAME=$(basename $ARTIFACT)
