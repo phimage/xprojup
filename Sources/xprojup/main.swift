@@ -152,11 +152,10 @@ struct Cmd: ParsableCommand {
              knownRegions = (
              -                English,*/
 
-            //if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
+            // if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
                 // objectVersion = 54
                 // Project object / attributes  BuildIndependentTargetsInParallel = YES;
-            //}
-
+            // }
 
             print("💾 Writing \(url)")
             try xcodeProj.write(to: url, format: .openStep )
