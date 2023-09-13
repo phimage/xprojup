@@ -43,6 +43,12 @@ struct Cmd: ParsableCommand {
 
     fileprivate func warns(_ originVersion: PBXProject.Version, _ wantedVersion: PBXProject.Version) -> [String: String] {
         var warns: [String: String] = [:]
+
+        if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
+            warns["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
+            // warns["ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS"] = "YES"
+        }
+
         if originVersion < PBXProject.Version._1400 && wantedVersion >= PBXProject.Version._1400 {
             warns["DEAD_CODE_STRIPPING"] = "YES"
         }
@@ -146,6 +152,12 @@ struct Cmd: ParsableCommand {
              knownRegions = (
              -                English,*/
 
+            //if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
+                // objectVersion = 54
+                // Project object / attributes  BuildIndependentTargetsInParallel = YES;
+            //}
+
+
             print("💾 Writing \(url)")
             try xcodeProj.write(to: url, format: .openStep )
 
@@ -161,6 +173,7 @@ extension URL {
 }
 
 extension PBXProject.Version {
+    static let _1500 = PBXProject.Version(major: 15, minor: 00)
     static let _1410 = PBXProject.Version(major: 14, minor: 10)
     static let _1400 = PBXProject.Version(major: 14, minor: 00)
     static let _1320 = PBXProject.Version(major: 13, minor: 20)
