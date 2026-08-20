@@ -1,5 +1,5 @@
 name: release
-on: 
+on:
   release:
     types: [published]
 
@@ -9,7 +9,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: ⬇️ Checkout
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - name: 🏗 swiftbuild
@@ -37,21 +37,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  ubuntuFocal:
-    name: Build Linux ubuntuFocal
-    runs-on: Ubuntu-20.04
+  ubuntu:
+    name: Build Linux (Ubuntu Noble)
+    runs-on: ubuntu-latest
+    container: swift:6.0-noble
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup swiftenv
-        run: |
-          git clone https://github.com/kylef/swiftenv.git ~/.swiftenv
-          export SWIFTENV_ROOT="$HOME/.swiftenv"
-          export PATH="$SWIFTENV_ROOT/bin:$PATH"
-          eval "$(swiftenv init -)"
-          echo "$PATH" >> $GITHUB_PATH
-      - run: rm -f .swift-version
-      - name: Install Swift
-        run: swiftenv install "5.7" --skip-existing
+      - uses: actions/checkout@v4
       - name: 🏗 swiftbuild
         run: |
           swift build -c release
@@ -59,11 +50,11 @@ jobs:
         run: |
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
           cd .build/release/
-          zip -r $REPOSITORY_NAME-x86_64-dynamic_swift_5.7-ubuntu-focal.zip $REPOSITORY_NAME
+          zip -r $REPOSITORY_NAME-x86_64-dynamic_swift_6.0-ubuntu-noble.zip $REPOSITORY_NAME
       - name: ⬆️ Upload to Release
         run: |
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
-          ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-dynamic_swift_5.7-ubuntu-focal.zip
+          ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-dynamic_swift_6.0-ubuntu-noble.zip
           AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
           CONTENT_LENGTH_HEADER="Content-Length: $(stat --format=%s "$ARTIFACT")"
           CONTENT_TYPE_HEADER="Content-Type: application/zip"
@@ -79,15 +70,15 @@ jobs:
       - name: 🏗 swiftbuild static
         run: |
            swift build -c release -Xswiftc -static-executable
-      - name: 📦 Build archive  
+      - name: 📦 Build archive
         run: |
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
           cd .build/release/
-          zip -r $REPOSITORY_NAME-x86_64-static-ubuntu-focal.zip $REPOSITORY_NAME
+          zip -r $REPOSITORY_NAME-x86_64-static-ubuntu-noble.zip $REPOSITORY_NAME
       - name: ⬆️ Upload to Release
         run: |
           REPOSITORY_NAME=$(jq --raw-output '.repository.name' $GITHUB_EVENT_PATH)
-          ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-static-ubuntu-focal.zip
+          ARTIFACT=.build/release/$REPOSITORY_NAME-x86_64-static-ubuntu-noble.zip
           AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
           CONTENT_LENGTH_HEADER="Content-Length: $(stat --format=%s "$ARTIFACT")"
           CONTENT_TYPE_HEADER="Content-Type: application/zip"

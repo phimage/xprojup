@@ -38,15 +38,29 @@ struct Cmd: ParsableCommand {
         if let xcode = self.xcode, let version = PBXProject.Version(xcode) {
             return version
         }
-        return ._1400
+        return ._2600
     }
 
     fileprivate func warns(_ originVersion: PBXProject.Version, _ wantedVersion: PBXProject.Version) -> [String: String] {
         var warns: [String: String] = [:]
 
+        // The list of recommended settings per Xcode version can be regenerated from the
+        // Xcode you target using `scripts/extract-recommended.sh` (it dumps the default build
+        // settings baked into `Base_ProjectSettings.xctemplate`). Add any new keys below.
+        // Note: targeting Xcode 26 (._2600, the default) mainly bumps `LastUpgradeCheck`, which
+        // is what silences the "Update to recommended settings" prompt; no new generic build
+        // settings were introduced between Xcode 16 and 26.
+
+        if originVersion < PBXProject.Version._1600 && wantedVersion >= PBXProject.Version._1600 {
+            // Xcode 16 prefers String Catalogs (`.xcstrings`) for localization; this is the
+            // default for new projects since Xcode 16.
+            warns["LOCALIZATION_PREFERS_STRING_CATALOGS"] = "YES"
+        }
+
         if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
             warns["ENABLE_USER_SCRIPT_SANDBOXING"] = "YES"
-            // warns["ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS"] = "YES"
+            // Xcode 15 recommended setting: type-safe Swift symbols for asset-catalog images/colors.
+            warns["ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS"] = "YES"
         }
 
         if originVersion < PBXProject.Version._1400 && wantedVersion >= PBXProject.Version._1400 {
@@ -171,7 +185,13 @@ extension URL {
     }
 }
 
+// `PBXProject.Version` is an immutable value type (two Ints); safe to treat as Sendable
+// so the static version constants below are usable from Swift 6 concurrency-checked code.
+extension PBXProject.Version: @retroactive @unchecked Sendable {}
+
 extension PBXProject.Version {
+    static let _2600 = PBXProject.Version(major: 26, minor: 00)
+    static let _1600 = PBXProject.Version(major: 16, minor: 00)
     static let _1500 = PBXProject.Version(major: 15, minor: 00)
     static let _1410 = PBXProject.Version(major: 14, minor: 10)
     static let _1400 = PBXProject.Version(major: 14, minor: 00)

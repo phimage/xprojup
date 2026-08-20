@@ -20,14 +20,14 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "Only ubuntu supported"
     exit 1
   fi
-  if [ "$DISTRIB_CODENAME" != "focal" ]; then
-    echo "Only ubuntu focal supported"
+  if [ "$DISTRIB_CODENAME" != "noble" ]; then
+    echo "Only ubuntu noble (24.04) supported"
     exit 1
   fi
   if [ -z "$(which swift)" ]; then
     archiveName=xprojup-x86_64-static-ubuntu-$DISTRIB_CODENAME.zip
   else
-    archiveName=xprojup-X86_64-dynamic_swift_5.7-ubuntu-$DISTRIB_CODENAME.zip
+    archiveName=xprojup-x86_64-dynamic_swift_6.0-ubuntu-$DISTRIB_CODENAME.zip
   fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then  # Mac OSX
   archiveName=xprojup.zip

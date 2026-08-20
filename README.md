@@ -6,7 +6,7 @@
 [![build](https://github.com/phimage/xprojup/actions/workflows/build.yml/badge.svg)](https://github.com/phimage/xprojup/actions/workflows/build.yml)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%F0%9F%A7%A1-white.svg?style=flat)](https://github.com/sponsors/phimage)
 
-Update project files to latest Xcode needs to avoid warnings such as `⚠️ Update to recommanded settings`
+Update project files to latest Xcode needs to avoid warnings such as `⚠️ Update to recommended settings`
 
 ## Usage
 
@@ -18,11 +18,11 @@ Update project files to latest Xcode needs to avoid warnings such as `⚠️ Upd
     xprojup --recursive /path/to/a/folder/that/contains/some/proj
 ```
 
-💡 Current Xcode target version is `14.0` ie. `1400`
+💡 Current Xcode target version is `26.0` ie. `2600`
 
-You could choose a specific versio using `--version <4 digits>`
+You could choose a specific version using `--xcode <4 digits>`
 ```bash
-    xprojup --xcode 1320 /path/to/my.xcodeproj
+    xprojup --xcode 1600 /path/to/my.xcodeproj
 ```
 
 ## Install
@@ -113,3 +113,34 @@ sudo apt install swiftlang
 ```
 
 #### or use swiftenv
+
+## Updating for a new Xcode version
+
+When a new Xcode ships, the recommended build settings it applies live inside
+`Xcode.app` (in `Base_ProjectSettings.xctemplate`). To refresh xprojup:
+
+1. Dump the authoritative default build settings from the Xcode you target:
+
+```bash
+    ./scripts/extract-recommended.sh            # SharedSettings as JSON
+    ./scripts/extract-recommended.sh --all      # + Debug/Release configs
+    ./scripts/extract-recommended.sh --keys      # just the keys
+```
+
+   It uses `DEVELOPER_DIR` / `xcode-select`, falling back to
+   `/Applications/Xcode.app`. Point it at a specific Xcode with:
+
+```bash
+    DEVELOPER_DIR=/Applications/Xcode-16.app/Contents/Developer ./scripts/extract-recommended.sh
+```
+
+2. Diff that output against the `warns(...)` map in
+   [`Sources/xprojup/main.swift`](Sources/xprojup/main.swift).
+3. Add a new `PBXProject.Version` constant (e.g. `._2700`) and, under a new
+   `if originVersion < ._2700 && wantedVersion >= ._2700 { ... }` threshold, add
+   only the keys that are genuinely *new* recommended settings for that version.
+4. Bump the default returned by `wantedVersion` to the new constant.
+
+> Note: bumping `LastUpgradeCheck` is what actually silences Xcode's
+> "Update to recommended settings" prompt; the settings are applied to match what
+> Xcode's "Perform Changes" would do.

@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 import PackageDescription
 
@@ -11,8 +11,8 @@ let package = Package(
             targets: ["xprojup"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
-        .package(url: "https://github.com/phimage/XcodeProjKit.git", from: "3.0.3")
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
+        .package(url: "https://github.com/phimage/XcodeProjKit.git", from: "4.0.1")
     ],
     targets: [
         .executableTarget(
@@ -20,6 +20,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 "XcodeProjKit"]
+            // Swift 6 language mode (default for tools-version 6.0).
         )
     ]
 )
