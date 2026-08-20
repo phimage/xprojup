@@ -9,7 +9,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: ⬇️ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - name: 🏗 swiftbuild
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.0-noble
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: 🏗 swiftbuild
         run: |
           swift build -c release
