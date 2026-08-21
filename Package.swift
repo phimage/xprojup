@@ -12,7 +12,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
-        .package(url: "https://github.com/phimage/XcodeProjKit.git", from: "4.0.1")
+        .package(url: "https://github.com/phimage/XcodeProjKit.git", from: "4.1.0")
     ],
     targets: [
         .executableTarget(
