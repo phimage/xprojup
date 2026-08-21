@@ -55,6 +55,9 @@ struct Cmd: ParsableCommand {
             // Xcode 16 prefers String Catalogs (`.xcstrings`) for localization; this is the
             // default for new projects since Xcode 16.
             warns["LOCALIZATION_PREFERS_STRING_CATALOGS"] = "YES"
+            // Confirmed from a real Xcode 26 "Update to recommended settings" migration diff:
+            // it enables String Catalog symbol generation.
+            warns["STRING_CATALOG_GENERATE_SYMBOLS"] = "YES"
         }
 
         if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
