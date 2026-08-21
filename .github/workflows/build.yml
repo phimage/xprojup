@@ -11,14 +11,17 @@ jobs:
     name: Lint check
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: swiftlint --strict
+      - uses: actions/checkout@v7
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: SwiftLint
+        run: swiftlint --strict
 
   test_on_macOS:
     name: Build and Test on macOS
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Build
       run: ./build.sh
     - name: Run tests
@@ -29,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.0-noble
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build
         run: ./build.sh
       - name: Run tests
