@@ -43,9 +43,11 @@ watchOS / visionOS) up to that minimum — never higher:
     xprojup --fix-deployment-target /path/to/my.xcodeproj
 ```
 
-> Note: only *project-level* build settings are updated, not per-target overrides. The floors
-> are a best-effort map keyed on the target Xcode; when unsure it under-raises rather than
-> dropping OS support silently.
+> Note: deployment targets are checked on both the project *and* every target's build
+> configurations (per-target overrides are what actually win at build time). Recommended
+> settings, by contrast, are applied at the project level, matching Xcode. The floors are a
+> best-effort map keyed on the target Xcode; when unsure it under-raises rather than dropping
+> OS support silently.
 
 ## Install
 

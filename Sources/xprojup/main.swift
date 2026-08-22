@@ -179,6 +179,28 @@ struct Cmd: ParsableCommand {
         return false
     }
 
+    // Warn about (or, with --fix-deployment-target, raise) any deployment target below the floor on a
+    // single build configuration. Returns true if it rewrote a value. Deployment targets below the
+    // toolchain floor are a hard build failure; raising one drops OS/device support (a product
+    // decision Xcode's own "Update to recommended settings" does not make), so warn unless opted in.
+    fileprivate func applyDeploymentFloors(_ buildConfiguration: XCBuildConfiguration,
+                                           _ floors: [String: String],
+                                           _ wantedVersion: PBXProject.Version) -> Bool {
+        var changed = false
+        for (key, floor) in floors {
+            guard let current = buildConfiguration.buildSettings?[key] as? String,
+                  isVersion(current, lessThan: floor) else { continue }
+            if fixDeploymentTarget {
+                print("⬆ 📱 \(key) \(current) → \(floor)")
+                buildConfiguration.buildSettings?[key] = floor
+                changed = true
+            } else {
+                print("⚠️ 📱 \(key) \(current) is below Xcode \(wantedVersion) minimum \(floor) — won't build. Pass --fix-deployment-target to raise it.")
+            }
+        }
+        return changed
+    }
+
     fileprivate func manageXcodeProj(_ url: URL) throws {
         print("📖 Reading \(url)")
         let xcodeProj = try XcodeProj(url: url)
@@ -201,6 +223,7 @@ struct Cmd: ParsableCommand {
             didChange = true
         }
 
+        // Project-level build settings: recommended settings (warns) + deployment-target floors.
         for buildConfiguration in xcodeProj.project.buildConfigurationList?.buildConfigurations ?? [] {
             print("⚙️ \(buildConfiguration.fields["name"] ?? "")")
             // new warns
@@ -220,19 +243,17 @@ struct Cmd: ParsableCommand {
 
             // TODO: LD_RUNPATH_SEARCH_PATHS on one line
 
-            // Deployment targets below the toolchain floor are a hard build failure. This is a
-            // product decision (it drops OS/device support), so warn by default and only rewrite
-            // when the user opts in with --fix-deployment-target.
-            for (key, floor) in floors {
-                guard let current = buildConfiguration.buildSettings?[key] as? String,
-                      isVersion(current, lessThan: floor) else { continue }
-                if fixDeploymentTarget {
-                    print("⬆ 📱 \(key) \(current) → \(floor)")
-                    buildConfiguration.buildSettings?[key] = floor
-                    didChange = true
-                } else {
-                    print("⚠️ 📱 \(key) \(current) is below Xcode \(wantedVersion) minimum \(floor) — won't build. Pass --fix-deployment-target to raise it.")
-                }
+            if applyDeploymentFloors(buildConfiguration, floors, wantedVersion) { didChange = true }
+        }
+
+        // Target-level build settings: deployment targets are usually overridden per target, and it is
+        // those per-target values that win at build time — so they must be checked too, otherwise only
+        // the (often unused) project-level value gets raised. Recommended settings stay at the project
+        // level, matching Xcode's "Update to recommended settings".
+        for target in xcodeProj.project.targets {
+            for buildConfiguration in target.buildConfigurationList?.buildConfigurations ?? [] {
+                print("⚙️ \(target.name) / \(buildConfiguration.fields["name"] ?? "")")
+                if applyDeploymentFloors(buildConfiguration, floors, wantedVersion) { didChange = true }
             }
         }
 
