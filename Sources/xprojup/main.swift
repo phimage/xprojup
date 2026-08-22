@@ -4,6 +4,15 @@ import Foundation
 
 struct Cmd: ParsableCommand {
 
+    // Keep this in sync with the git tag: bump it in the same commit that will be tagged/released.
+    static let version = "0.1.0"
+
+    static let configuration = CommandConfiguration(
+        commandName: "xprojup",
+        abstract: "Update Xcode project files to a target Xcode's recommended settings.",
+        version: Cmd.version
+    )
+
     @Option(name: .long, help: "Specify an alternate Xcode version")
     var xcode: String?
 

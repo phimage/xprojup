@@ -18,6 +18,12 @@ Update project files to latest Xcode needs to avoid warnings such as `⚠️ Upd
     xprojup --recursive /path/to/a/folder/that/contains/some/proj
 ```
 
+Print the installed version (also shown in `--help`):
+
+```bash
+    xprojup --version
+```
+
 💡 Current Xcode target version is `26.0` ie. `2600`
 
 You could choose a specific version using `--xcode <4 digits>`

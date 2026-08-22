@@ -53,3 +53,6 @@ sudo rm -f $dst/xprojup
 sudo cp $binary $dst/
 
 rm -rf "$TMP"
+
+echo -n "Installed xprojup version: "
+"$dst/xprojup" --version
