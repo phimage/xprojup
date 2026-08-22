@@ -25,6 +25,28 @@ You could choose a specific version using `--xcode <4 digits>`
     xprojup --xcode 1600 /path/to/my.xcodeproj
 ```
 
+### Deployment targets
+
+A deployment target below the target Xcode's supported minimum is a *hard build failure*
+(e.g. Xcode 26 refuses `IPHONEOS_DEPLOYMENT_TARGET = 9.0`, whose minimum is `15.0`). Because
+raising it drops OS/device support — a product decision, and not something Xcode's own
+"Update to recommended settings" touches — xprojup only **warns** about it by default:
+
+```
+⚠️ 📱 IPHONEOS_DEPLOYMENT_TARGET 9.0 is below Xcode 26.0 minimum 15.0 — won't build. Pass --fix-deployment-target to raise it.
+```
+
+Pass `--fix-deployment-target` to actually raise below-floor targets (iOS / macOS / tvOS /
+watchOS / visionOS) up to that minimum — never higher:
+
+```bash
+    xprojup --fix-deployment-target /path/to/my.xcodeproj
+```
+
+> Note: only *project-level* build settings are updated, not per-target overrides. The floors
+> are a best-effort map keyed on the target Xcode; when unsure it under-raises rather than
+> dropping OS support silently.
+
 ## Install
 
 Just download from release if any, or build it (and move it to `PATH`)

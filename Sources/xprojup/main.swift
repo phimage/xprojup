@@ -10,6 +10,9 @@ struct Cmd: ParsableCommand {
     @Flag(help: "Look recursively for proj file")
     var recursive: Bool = false
 
+    @Flag(name: .long, help: "Raise deployment targets that are below the target Xcode's minimum (default: only warn)")
+    var fixDeploymentTarget: Bool = false
+
     @Argument(help: "File or folder to update")
     var path: String
 
@@ -116,69 +119,138 @@ struct Cmd: ParsableCommand {
         return warns
     }
 
+    // Minimum *deployment* targets the toolchain will accept, per Xcode version.
+    // Unlike `warns()`, these are NOT part of Xcode's "Update to recommended settings" — a value
+    // below the floor is a hard build failure ("… minimum deployment target … is less than …").
+    // Only ever raise up to the floor, never to the latest OS. Values below the smallest threshold
+    // are left untouched. Numbers come from Apple's Xcode release notes / each SDK's SDKSettings.plist;
+    // when unsure prefer a lower value (under-raising is safe, over-raising drops OS support silently).
+    fileprivate func deploymentFloors(_ wantedVersion: PBXProject.Version) -> [String: String] {
+        var floors: [String: String] = [:]
+
+        // iOS — Xcode 14: 11.0, Xcode 15/16: 12.0, Xcode 26: 15.0
+        if wantedVersion >= PBXProject.Version._2600 {
+            floors["IPHONEOS_DEPLOYMENT_TARGET"] = "15.0"
+        } else if wantedVersion >= PBXProject.Version._1500 {
+            floors["IPHONEOS_DEPLOYMENT_TARGET"] = "12.0"
+        } else if wantedVersion >= PBXProject.Version._1400 {
+            floors["IPHONEOS_DEPLOYMENT_TARGET"] = "11.0"
+        }
+
+        // macOS — Xcode 15/16: 10.13, Xcode 26: 12.0
+        if wantedVersion >= PBXProject.Version._2600 {
+            floors["MACOSX_DEPLOYMENT_TARGET"] = "12.0"
+        } else if wantedVersion >= PBXProject.Version._1500 {
+            floors["MACOSX_DEPLOYMENT_TARGET"] = "10.13"
+        }
+
+        // tvOS — Xcode 15/16: 12.0, Xcode 26: 15.0
+        if wantedVersion >= PBXProject.Version._2600 {
+            floors["TVOS_DEPLOYMENT_TARGET"] = "15.0"
+        } else if wantedVersion >= PBXProject.Version._1500 {
+            floors["TVOS_DEPLOYMENT_TARGET"] = "12.0"
+        }
+
+        // watchOS — Xcode 15/16: 4.0, Xcode 26: 8.0
+        if wantedVersion >= PBXProject.Version._2600 {
+            floors["WATCHOS_DEPLOYMENT_TARGET"] = "8.0"
+        } else if wantedVersion >= PBXProject.Version._1500 {
+            floors["WATCHOS_DEPLOYMENT_TARGET"] = "4.0"
+        }
+
+        // visionOS — 1.0 since it first shipped (Xcode 15.2+)
+        if wantedVersion >= PBXProject.Version._2600 {
+            floors["XROS_DEPLOYMENT_TARGET"] = "1.0"
+        }
+
+        return floors
+    }
+
+    // Semantic version compare on dotted strings. NOT a Double compare: as doubles "10.9" > "10.13",
+    // but as macOS versions 10.9 < 10.13. Missing components are treated as 0 ("12" == "12.0").
+    fileprivate func isVersion(_ lhs: String, lessThan rhs: String) -> Bool {
+        let lhsParts = lhs.split(separator: ".").map { Int($0) ?? 0 }
+        let rhsParts = rhs.split(separator: ".").map { Int($0) ?? 0 }
+        for index in 0..<max(lhsParts.count, rhsParts.count) {
+            let left = index < lhsParts.count ? lhsParts[index] : 0
+            let right = index < rhsParts.count ? rhsParts[index] : 0
+            if left != right { return left < right }
+        }
+        return false
+    }
+
     fileprivate func manageXcodeProj(_ url: URL) throws {
         print("📖 Reading \(url)")
         let xcodeProj = try XcodeProj(url: url)
 
         let wantedVersion: PBXProject.Version = self.wantedVersion
         let originVersion = xcodeProj.project.lastUpgradeCheck ?? wantedVersion
+
+        // Recommended settings (the `warns`) only make sense as the delta between the project's last
+        // upgrade check and the target Xcode; deployment-target floors depend solely on the target
+        // Xcode, so they are checked even when the project already claims to be up to date — otherwise
+        // a single (even warn-only) run bumps lastUpgradeCheck and locks out a later --fix.
+        let warns = originVersion < wantedVersion ? warns(originVersion, wantedVersion) : [:]
+        let floors = deploymentFloors(wantedVersion)
+        var didChange = false
+
         if originVersion < wantedVersion {
             // upgrade last check
             print("⬆ lastUpgradeCheck: \(originVersion) → \(wantedVersion)")
             xcodeProj.project.lastUpgradeCheck = wantedVersion
+            didChange = true
+        }
 
-            // add missing warning
+        for buildConfiguration in xcodeProj.project.buildConfigurationList?.buildConfigurations ?? [] {
+            print("⚙️ \(buildConfiguration.fields["name"] ?? "")")
+            // new warns
 
-            let warns = warns(originVersion, wantedVersion)
-
-            for buildConfiguration in xcodeProj.project.buildConfigurationList?.buildConfigurations ?? [] {
-                print("⚙️ \(buildConfiguration.fields["name"] ?? "")")
-                // new warns
-
-                for (key, value) in warns {
-                    if buildConfiguration.buildSettings?[key] == nil {
-                        print("＋ ⚠️ \(key) = \(value)")
-                        buildConfiguration.buildSettings?[key] = value
-                    }
-                }
-
-                // TODO: splitted prop?
-                // - SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-                // + SWIFT_COMPILATION_MODE = wholemodule;
-                // + SWIFT_OPTIMIZATION_LEVEL = "-O";
-
-                // TODO: LD_RUNPATH_SEARCH_PATHS on one line
-
-                if let target = buildConfiguration.buildSettings?["IPHONEOS_DEPLOYMENT_TARGET"] as? String, let current = Double(target) {
-                    let wantedVersionString: String
-                    if wantedVersion >= PBXProject.Version ._1300 {
-                        wantedVersionString = "12.0"
-                    } else if wantedVersion >= PBXProject.Version ._1100 {
-                        wantedVersionString = "10.0"
-                    } else {
-                        wantedVersionString = "10.0"
-                    }
-                    if current < Double(wantedVersionString)! {
-                        print("⬆ 📱 IPHONEOS_DEPLOYMENT_TARGET \(target) → \(wantedVersionString)")
-                        buildConfiguration.buildSettings?["IPHONEOS_DEPLOYMENT_TARGET"] = wantedVersionString
-                    }
+            for (key, value) in warns {
+                if buildConfiguration.buildSettings?[key] == nil {
+                    print("＋ ⚠️ \(key) = \(value)")
+                    buildConfiguration.buildSettings?[key] = value
+                    didChange = true
                 }
             }
 
-            /*TODO: developmentRegion = English to en;
-             knownRegions = (
-             -                English,*/
+            // TODO: splitted prop?
+            // - SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+            // + SWIFT_COMPILATION_MODE = wholemodule;
+            // + SWIFT_OPTIMIZATION_LEVEL = "-O";
 
-            // if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
-                // objectVersion = 54
-                // Project object / attributes  BuildIndependentTargetsInParallel = YES;
-            // }
+            // TODO: LD_RUNPATH_SEARCH_PATHS on one line
 
+            // Deployment targets below the toolchain floor are a hard build failure. This is a
+            // product decision (it drops OS/device support), so warn by default and only rewrite
+            // when the user opts in with --fix-deployment-target.
+            for (key, floor) in floors {
+                guard let current = buildConfiguration.buildSettings?[key] as? String,
+                      isVersion(current, lessThan: floor) else { continue }
+                if fixDeploymentTarget {
+                    print("⬆ 📱 \(key) \(current) → \(floor)")
+                    buildConfiguration.buildSettings?[key] = floor
+                    didChange = true
+                } else {
+                    print("⚠️ 📱 \(key) \(current) is below Xcode \(wantedVersion) minimum \(floor) — won't build. Pass --fix-deployment-target to raise it.")
+                }
+            }
+        }
+
+        /*TODO: developmentRegion = English to en;
+         knownRegions = (
+         -                English,*/
+
+        // if originVersion < PBXProject.Version._1500 && wantedVersion >= PBXProject.Version._1500 {
+            // objectVersion = 54
+            // Project object / attributes  BuildIndependentTargetsInParallel = YES;
+        // }
+
+        if didChange {
             print("💾 Writing \(url)")
             try xcodeProj.write(to: url, format: .openStep )
-
-            // TODO: modify xxx.xcodeproj/xcshareddata/xcschemes/xxx.xcscheme
         }
+
+        // TODO: modify xxx.xcodeproj/xcshareddata/xcschemes/xxx.xcscheme
     }
 }
 
